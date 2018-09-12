@@ -101,7 +101,7 @@ func Initialize(backuper Backuper) {
 	}
 }
 
-//GetBackups - get backups from Backy
+//GetBackups - get backups from Backuper
 func getBackups(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("GetBackups r=%s", r)
 	w.Header().Set("Content-Type", "application/json")
@@ -118,7 +118,7 @@ func getBackups(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//GetBackup - get specific backup from Backy
+//GetBackup - get specific backup from Backuper
 func getBackup(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("GetBackup r=%s", r)
 	params := mux.Vars(r)
@@ -162,7 +162,7 @@ func createBackup(w http.ResponseWriter, r *http.Request) {
 	sendSchellyResponse(runningBackupAPIID, "running", "backup triggered", -1, http.StatusAccepted, w)
 }
 
-//DeleteBackup - delete backup from Backup Backend
+//DeleteBackup - delete backup from Backuper
 func deleteBackup(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("DeleteBackup r=%s", r)
 	params := mux.Vars(r)
