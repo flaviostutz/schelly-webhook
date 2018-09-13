@@ -33,8 +33,6 @@ type SchellyResponse struct {
 
 //Backuper interface for who is implementing specific backup operations on backend
 type Backuper interface {
-	//Init called before all other methods during initialization of webhook
-	Init() error
 	//CreateNewBackup create a new backup synchronously (return only after complete backup creation). If you set shellContext.CmdRef when calling a Shell Script, the bridge will cancel the process automatically if a DELETE /backup/{id} for the running backup is received
 	CreateNewBackup(apiID string, timeout time.Duration, shellContext *ShellContext) error
 	//DeleteBackup remove backup data from storage. if backup is still running, cancel it
@@ -84,8 +82,6 @@ func Initialize(backuper Backuper) {
 	options.prePostTimeout = *prePostTimeout
 	options.preBackupCommand = *preBackupCommand
 	options.postBackupCommand = *postBackupCommand
-
-	backuper.Init()
 
 	router := mux.NewRouter()
 	router.HandleFunc("/backups", getBackups).Methods("GET")
