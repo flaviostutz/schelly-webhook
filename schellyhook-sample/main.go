@@ -17,14 +17,9 @@ var runningID = ""
 
 func main() {
 	logrus.Infof("Starting Sample in-memory Schelly Webhook")
+	backups = make([]string, 0)
 	sampleBackuper := SampleBackuper{}
 	schellyhook.Initialize(sampleBackuper)
-}
-
-//Init start Schelly Webhook
-func (sb SampleBackuper) Init() error {
-	backups = make([]string, 0)
-	return nil
 }
 
 func (sb SampleBackuper) CreateNewBackup(apiID string, timeout time.Duration, shellContext *schellyhook.ShellContext) error {
