@@ -11,7 +11,8 @@ import (
 
 //ShellContext container to transport a Cmd reference
 type ShellContext struct {
-	cmdRef *cmd.Cmd
+	//CmdRef cmd.Cmd pointer that can be used to set command references that should be killed when a backup deletion of a running job is detected
+	CmdRef *cmd.Cmd
 }
 
 //ExecShellTimeout execute a shell command (like bash -c 'your command') with a timeout. After that time, the process will be cancelled

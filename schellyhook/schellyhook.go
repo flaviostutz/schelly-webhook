@@ -35,11 +35,11 @@ type SchellyResponse struct {
 type Backuper interface {
 	//CreateNewBackup create a new backup synchronously (return only after complete backup creation). If you set shellContext.CmdRef when calling a Shell Script, the bridge will cancel the process automatically if a DELETE /backup/{id} for the running backup is received
 	CreateNewBackup(apiID string, timeout time.Duration, shellContext *ShellContext) error
-	//DeleteBackup remove backup data from storage. if backup is still running, cancel it
+	//DeleteBackup remove backup data from storage. if backup is still running and set cmdRef on ShellContext of CreateBackup call, cancel it
 	DeleteBackup(apiID string) error
-	//GetAllBackups returns all tracked backups
+	//GetAllBackups returns all tracked backups. this is optional for Schelly
 	GetAllBackups() ([]SchellyResponse, error)
-	//GetBackup returns a specific backup info
+	//GetBackup returns a specific backup info. if requested apiID is running, this method is not even called, because schellyhook will do this for you
 	GetBackup(apiID string) (*SchellyResponse, error)
 }
 
