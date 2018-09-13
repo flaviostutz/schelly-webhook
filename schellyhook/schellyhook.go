@@ -15,11 +15,11 @@ import (
 
 //Options command line options
 type Options struct {
-	listenPort        int
-	listenIP          string
-	prePostTimeout    int
-	preBackupCommand  string
-	postBackupCommand string
+	ListenPort        int
+	ListenIP          string
+	PrePostTimeout    int
+	PreBackupCommand  string
+	PostBackupCommand string
 }
 
 //SchellyResponse schelly webhook response
@@ -81,18 +81,18 @@ func Initialize(backuper Backuper) {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 
-	options.listenPort = *listenPort
-	options.listenIP = *listenIP
-	options.prePostTimeout = *prePostTimeout
-	options.preBackupCommand = *preBackupCommand
-	options.postBackupCommand = *postBackupCommand
+	options.ListenPort = *listenPort
+	options.ListenIP = *listenIP
+	options.PrePostTimeout = *prePostTimeout
+	options.PreBackupCommand = *preBackupCommand
+	options.PostBackupCommand = *postBackupCommand
 
 	router := mux.NewRouter()
 	router.HandleFunc("/backups", getBackups).Methods("GET")
 	router.HandleFunc("/backups", createBackup).Methods("POST")
 	router.HandleFunc("/backups/{id}", getBackup).Methods("GET")
 	router.HandleFunc("/backups/{id}", deleteBackup).Methods("DELETE")
-	listen := fmt.Sprintf("%s:%d", options.listenIP, options.listenPort)
+	listen := fmt.Sprintf("%s:%d", options.ListenIP, options.ListenPort)
 	logrus.Infof("Listening at %s", listen)
 	err := http.ListenAndServe(listen, router)
 	if err != nil {
@@ -218,9 +218,9 @@ func runBackup(apiID string) {
 	RunningBackupAPIID = apiID
 
 	//process pre backup command before calling backup
-	if options.preBackupCommand != "" {
-		logrus.Infof("Running pre-backup command '%s'", options.preBackupCommand)
-		out, err := ExecShellTimeout(options.preBackupCommand, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
+	if options.PreBackupCommand != "" {
+		logrus.Infof("Running pre-backup command '%s'", options.PreBackupCommand)
+		out, err := ExecShellTimeout(options.PreBackupCommand, time.Duration(options.PrePostTimeout)*time.Second, &currentBackupContext)
 		if err != nil {
 			status := currentBackupContext.CmdRef.Status()
 			if status.Exit == -1 {
@@ -236,7 +236,7 @@ func runBackup(apiID string) {
 
 	//run backup
 	logrus.Infof("Running backup")
-	err := currentBackuper.CreateNewBackup(RunningBackupAPIID, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
+	err := currentBackuper.CreateNewBackup(RunningBackupAPIID, time.Duration(options.PrePostTimeout)*time.Second, &currentBackupContext)
 	if err != nil {
 		status := currentBackupContext.CmdRef.Status()
 		if status.Exit == -1 {
@@ -250,9 +250,9 @@ func runBackup(apiID string) {
 	}
 
 	//process post backup command after finished
-	if options.postBackupCommand != "" {
-		logrus.Infof("Running post-backup command '%s'", options.postBackupCommand)
-		out, err := ExecShellTimeout(options.postBackupCommand, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
+	if options.PostBackupCommand != "" {
+		logrus.Infof("Running post-backup command '%s'", options.PostBackupCommand)
+		out, err := ExecShellTimeout(options.PostBackupCommand, time.Duration(options.PrePostTimeout)*time.Second, &currentBackupContext)
 		if err != nil {
 			status := currentBackupContext.CmdRef.Status()
 			if status.Exit == -1 {
