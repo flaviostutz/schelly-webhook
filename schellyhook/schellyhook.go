@@ -33,6 +33,8 @@ type SchellyResponse struct {
 
 //Backuper interface for who is implementing specific backup operations on backend
 type Backuper interface {
+	//Init register command line flags here etc
+	Init() error
 	//CreateNewBackup create a new backup synchronously (return only after complete backup creation). If you set shellContext.CmdRef when calling a Shell Script, the bridge will cancel the process automatically if a DELETE /backup/{id} for the running backup is received
 	CreateNewBackup(apiID string, timeout time.Duration, shellContext *ShellContext) error
 	//DeleteBackup remove backup data from storage. if backup is still running and set cmdRef on ShellContext of CreateBackup call, cancel it
@@ -58,6 +60,7 @@ func Initialize(backuper Backuper) {
 	if currentBackuper != nil {
 		logrus.Infof("Replacing previously existing 'backuper' instance in Schelly-Webhook")
 	}
+	currentBackuper.Init()
 	currentBackuper = backuper
 	listenPort := flag.Int("listen-port", 7070, "REST API server listen port")
 	listenIP := flag.String("listen-ip", "0.0.0.0", "REST API server listen ip address")

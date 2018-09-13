@@ -22,6 +22,10 @@ func main() {
 	schellyhook.Initialize(sampleBackuper)
 }
 
+func (sb SampleBackuper) Init() error {
+	return nil
+}
+
 func (sb SampleBackuper) CreateNewBackup(apiID string, timeout time.Duration, shellContext *schellyhook.ShellContext) error {
 	logrus.Infof("createBackup(): Triggering fake backup. Will delay 20s...")
 	backups = append(backups, apiID)
