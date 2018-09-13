@@ -171,9 +171,9 @@ func deleteBackup(w http.ResponseWriter, r *http.Request) {
 	apiID := params["id"]
 
 	if RunningBackupAPIID == apiID {
-		if currentBackupContext.cmdRef != nil {
+		if currentBackupContext.CmdRef != nil {
 			logrus.Debugf("Canceling currently running backup %s", RunningBackupAPIID)
-			err := (*currentBackupContext.cmdRef).Stop()
+			err := (*currentBackupContext.CmdRef).Stop()
 			if err != nil {
 				sendSchellyResponse(apiID, "running", "Couldn't cancel current running backup task. err="+err.Error(), -1, http.StatusInternalServerError, w)
 			} else {
@@ -222,7 +222,7 @@ func runBackup(apiID string) {
 		logrus.Infof("Running pre-backup command '%s'", options.preBackupCommand)
 		out, err := ExecShellTimeout(options.preBackupCommand, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
 		if err != nil {
-			status := currentBackupContext.cmdRef.Status()
+			status := currentBackupContext.CmdRef.Status()
 			if status.Exit == -1 {
 				logrus.Warnf("Pre-backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 			}
@@ -238,7 +238,7 @@ func runBackup(apiID string) {
 	logrus.Infof("Running backup")
 	err := currentBackuper.CreateNewBackup(RunningBackupAPIID, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
 	if err != nil {
-		status := currentBackupContext.cmdRef.Status()
+		status := currentBackupContext.CmdRef.Status()
 		if status.Exit == -1 {
 			logrus.Warnf("Backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 		}
@@ -254,7 +254,7 @@ func runBackup(apiID string) {
 		logrus.Infof("Running post-backup command '%s'", options.postBackupCommand)
 		out, err := ExecShellTimeout(options.postBackupCommand, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
 		if err != nil {
-			status := currentBackupContext.cmdRef.Status()
+			status := currentBackupContext.CmdRef.Status()
 			if status.Exit == -1 {
 				logrus.Warnf("Post-backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 			}

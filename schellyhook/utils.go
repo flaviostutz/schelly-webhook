@@ -21,7 +21,7 @@ func ExecShellTimeout(command string, timeout time.Duration, ctx *ShellContext) 
 	statusChan := acmd.Start() // non-blocking
 	running := true
 	if ctx != nil {
-		ctx.cmdRef = acmd
+		ctx.CmdRef = acmd
 	}
 
 	//kill if taking too long
