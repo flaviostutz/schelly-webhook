@@ -44,10 +44,14 @@ type Backuper interface {
 }
 
 var options = new(Options)
-var runningBackupAPIID = ""
 var currentBackupContext = ShellContext{}
-var createBackupChan = make(chan string)
 var currentBackuper Backuper
+
+//RunningBackupAPIID current apiID of the currently running backup, if any
+var RunningBackupAPIID = ""
+
+//CurrentBackupStartTime start time of currently running backup, if any
+var CurrentBackupStartTime time.Time
 
 //Initialize must be invoked to start REST server along with all Backuper hooks
 func Initialize(backuper Backuper) {
@@ -121,8 +125,8 @@ func getBackup(w http.ResponseWriter, r *http.Request) {
 
 	apiID := params["id"]
 
-	if runningBackupAPIID == apiID {
-		sendSchellyResponse(apiID, "running", "backup is still running", -1, http.StatusOK, w)
+	if RunningBackupAPIID == apiID {
+		sendSchellyResponse(apiID, "running", "backup is running", -1, http.StatusOK, w)
 		return
 	}
 
@@ -144,18 +148,19 @@ func getBackup(w http.ResponseWriter, r *http.Request) {
 func createBackup(w http.ResponseWriter, r *http.Request) {
 	logrus.Infof(">>>>CreateBackup r=%s", r)
 
-	if runningBackupAPIID != "" {
-		logrus.Infof("Another backup id %s is already running. Aborting.", runningBackupAPIID)
-		http.Error(w, fmt.Sprintf("Another backup id %s is already running. Aborting.", runningBackupAPIID), http.StatusConflict)
+	if RunningBackupAPIID != "" {
+		logrus.Infof("Another backup id %s is already running. Aborting.", RunningBackupAPIID)
+		http.Error(w, fmt.Sprintf("Another backup id %s is already running. Aborting.", RunningBackupAPIID), http.StatusConflict)
 		return
 	}
 
-	runningBackupAPIID = createAPIID()
+	RunningBackupAPIID = createAPIID()
+	CurrentBackupStartTime = time.Now()
 
 	//run backup assyncronouslly
-	go runBackup(runningBackupAPIID)
+	go runBackup(RunningBackupAPIID)
 
-	sendSchellyResponse(runningBackupAPIID, "running", "backup triggered", -1, http.StatusAccepted, w)
+	sendSchellyResponse(RunningBackupAPIID, "running", "backup triggered", -1, http.StatusAccepted, w)
 }
 
 //DeleteBackup - delete backup from Backuper
@@ -165,9 +170,9 @@ func deleteBackup(w http.ResponseWriter, r *http.Request) {
 
 	apiID := params["id"]
 
-	if runningBackupAPIID == apiID {
+	if RunningBackupAPIID == apiID {
 		if currentBackupContext.cmdRef != nil {
-			logrus.Debugf("Canceling currently running backup %s", runningBackupAPIID)
+			logrus.Debugf("Canceling currently running backup %s", RunningBackupAPIID)
 			err := (*currentBackupContext.cmdRef).Stop()
 			if err != nil {
 				sendSchellyResponse(apiID, "running", "Couldn't cancel current running backup task. err="+err.Error(), -1, http.StatusInternalServerError, w)
@@ -209,8 +214,8 @@ func sendSchellyResponse(id string, status string, message string, size float64,
 }
 
 func runBackup(apiID string) {
-	logrus.Debugf("Backup request arrived apiID=%s", runningBackupAPIID)
-	runningBackupAPIID = apiID
+	logrus.Debugf("Backup request arrived apiID=%s", RunningBackupAPIID)
+	RunningBackupAPIID = apiID
 
 	//process pre backup command before calling backup
 	if options.preBackupCommand != "" {
@@ -222,7 +227,7 @@ func runBackup(apiID string) {
 				logrus.Warnf("Pre-backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 			}
 			logrus.Debugf("Pre-backup command error. out=%s; err=%s", out, err.Error())
-			runningBackupAPIID = ""
+			RunningBackupAPIID = ""
 			return
 		} else {
 			logrus.Debug("Pre-backup command success")
@@ -231,17 +236,17 @@ func runBackup(apiID string) {
 
 	//run backup
 	logrus.Infof("Running backup")
-	err := currentBackuper.CreateNewBackup(runningBackupAPIID, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
+	err := currentBackuper.CreateNewBackup(RunningBackupAPIID, time.Duration(options.prePostTimeout)*time.Second, &currentBackupContext)
 	if err != nil {
 		status := currentBackupContext.cmdRef.Status()
 		if status.Exit == -1 {
 			logrus.Warnf("Backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 		}
 		logrus.Debugf("Backup error. Will retry. err=%s", err.Error())
-		runningBackupAPIID = ""
+		RunningBackupAPIID = ""
 		return
 	} else {
-		logrus.Debug("Backup creation success on Backuper. backup id %s", runningBackupAPIID)
+		logrus.Debug("Backup creation success on Backuper. backup id %s", RunningBackupAPIID)
 	}
 
 	//process post backup command after finished
@@ -254,7 +259,7 @@ func runBackup(apiID string) {
 				logrus.Warnf("Post-backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 			}
 			logrus.Debugf("Post-backup command error. out=%s; err=%s", out, err.Error())
-			runningBackupAPIID = ""
+			RunningBackupAPIID = ""
 			return
 		} else {
 			logrus.Debug("Post-backup command success")
@@ -263,7 +268,7 @@ func runBackup(apiID string) {
 	logrus.Infof("Backup finished")
 
 	//now we can accept another POST /backups call...
-	runningBackupAPIID = ""
+	RunningBackupAPIID = ""
 }
 
 func createAPIID() string {
