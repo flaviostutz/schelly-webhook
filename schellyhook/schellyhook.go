@@ -129,7 +129,7 @@ func getBackup(w http.ResponseWriter, r *http.Request) {
 	apiID := params["id"]
 
 	if RunningBackupAPIID == apiID {
-		sendSchellyResponse(apiID, "running", "backup is running", -1, http.StatusOK, w)
+		sendSchellyResponse(apiID, "", "running", "backup is running", -1, http.StatusOK, w)
 		return
 	}
 
@@ -144,7 +144,7 @@ func getBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendSchellyResponse(apiID, resp.Status, resp.Message, resp.SizeMB, http.StatusOK, w)
+	sendSchellyResponse(apiID, resp.DataID, resp.Status, resp.Message, resp.SizeMB, http.StatusOK, w)
 }
 
 //CreateBackup - trigger new backup
@@ -163,7 +163,7 @@ func createBackup(w http.ResponseWriter, r *http.Request) {
 	//run backup assyncronouslly
 	go runBackup(RunningBackupAPIID)
 
-	sendSchellyResponse(RunningBackupAPIID, "running", "backup triggered", -1, http.StatusAccepted, w)
+	sendSchellyResponse(RunningBackupAPIID, "", "running", "backup triggered", -1, http.StatusAccepted, w)
 }
 
 //DeleteBackup - delete backup from Backuper
@@ -178,15 +178,26 @@ func deleteBackup(w http.ResponseWriter, r *http.Request) {
 			logrus.Debugf("Canceling currently running backup %s", RunningBackupAPIID)
 			err := (*currentBackupContext.CmdRef).Stop()
 			if err != nil {
-				sendSchellyResponse(apiID, "running", "Couldn't cancel current running backup task. err="+err.Error(), -1, http.StatusInternalServerError, w)
+				sendSchellyResponse(apiID, "", "running", "Couldn't cancel current running backup task. err="+err.Error(), -1, http.StatusInternalServerError, w)
 			} else {
-				sendSchellyResponse(apiID, "deleted", "Running backup task was cancelled successfuly", -1, http.StatusOK, w)
+				sendSchellyResponse(apiID, "", "deleted", "Running backup task was cancelled successfuly", -1, http.StatusOK, w)
 			}
 		}
 		return
 	}
 
-	err := currentBackuper.DeleteBackup(apiID)
+	bk, err := currentBackuper.GetBackup(apiID)
+	if err != nil {
+		logrus.Warnf("Error calling deleteBackup() with id %s", apiID)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else if bk == nil {
+		logrus.Warnf("Backup %s not found", apiID)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	err = currentBackuper.DeleteBackup(apiID)
 	if err != nil {
 		logrus.Warnf("Error calling deleteBackup() with id %s", apiID)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -195,12 +206,13 @@ func deleteBackup(w http.ResponseWriter, r *http.Request) {
 
 	logrus.Debugf("Backup %s deleted", apiID)
 
-	sendSchellyResponse(apiID, "deleted", "backup deleted successfuly", -1, http.StatusOK, w)
+	sendSchellyResponse(apiID, bk.DataID, "deleted", "backup deleted successfuly", -1, http.StatusOK, w)
 }
 
-func sendSchellyResponse(id string, status string, message string, size float64, httpStatus int, w http.ResponseWriter) {
+func sendSchellyResponse(apiID string, dataID string, status string, message string, size float64, httpStatus int, w http.ResponseWriter) {
 	resp := SchellyResponse{
-		ID:      id,
+		ID:      apiID,
+		DataID:  dataID,
 		Status:  status,
 		Message: message,
 		SizeMB:  size,
