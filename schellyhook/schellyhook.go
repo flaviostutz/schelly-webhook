@@ -60,8 +60,8 @@ func Initialize(backuper Backuper) {
 	if currentBackuper != nil {
 		logrus.Infof("Replacing previously existing 'backuper' instance in Schelly-Webhook")
 	}
-	currentBackuper.Init()
 	currentBackuper = backuper
+	currentBackuper.Init()
 	listenPort := flag.Int("listen-port", 7070, "REST API server listen port")
 	listenIP := flag.String("listen-ip", "0.0.0.0", "REST API server listen ip address")
 	logLevel := flag.String("log-level", "info", "debug, info, warning or error")
