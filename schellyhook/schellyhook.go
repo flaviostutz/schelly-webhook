@@ -270,7 +270,7 @@ func runBackup(apiID string) {
 		RunningBackupAPIID = ""
 		return
 	} else {
-		logrus.Debug("Backup creation success on Backuper. backup id %s", RunningBackupAPIID)
+		logrus.Debugf("Backup creation success on Backuper. backup id %s", RunningBackupAPIID)
 	}
 
 	//process post backup command after finished
