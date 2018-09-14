@@ -202,7 +202,7 @@ func deleteBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if bk == nil {
 		logrus.Warnf("Backup %s not found", apiID)
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("Backup %s not found", apiID), http.StatusNotFound)
 		return
 	}
 
