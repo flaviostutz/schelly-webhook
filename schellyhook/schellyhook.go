@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -58,12 +57,15 @@ var RunningBackupAPIID = ""
 var CurrentBackupStartTime time.Time
 
 //Initialize must be invoked to start REST server along with all Backuper hooks
-func Initialize(backuper Backuper) {
+func Initialize(backuper Backuper) error {
 	if currentBackuper != nil {
 		logrus.Infof("Replacing previously existing 'backuper' instance in Schelly-Webhook")
 	}
 	currentBackuper = backuper
-	currentBackuper.RegisterFlags()
+	err := currentBackuper.RegisterFlags()
+	if err != nil {
+		return err
+	}
 	listenPort := flag.Int("listen-port", 7070, "REST API server listen port")
 	listenIP := flag.String("listen-ip", "0.0.0.0", "REST API server listen ip address")
 	logLevel := flag.String("log-level", "info", "debug, info, warning or error")
@@ -99,12 +101,16 @@ func Initialize(backuper Backuper) {
 	router.HandleFunc("/backups/{id}", deleteBackup).Methods("DELETE")
 	listen := fmt.Sprintf("%s:%d", options.ListenIP, options.ListenPort)
 	logrus.Infof("Listening at %s", listen)
-	currentBackuper.Init()
-	err := http.ListenAndServe(listen, router)
+	err = currentBackuper.Init()
 	if err != nil {
-		logrus.Errorf("Error while listening requests: %s", err)
-		os.Exit(1)
+		return err
 	}
+
+	err = http.ListenAndServe(listen, router)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //GetBackups - get backups from Backuper
