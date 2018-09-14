@@ -266,7 +266,7 @@ func runBackup(apiID string) {
 		if status.Exit == -1 {
 			logrus.Warnf("Backup command timeout enforced (%d seconds)", (status.StopTs-status.StartTs)/1000000000)
 		}
-		logrus.Debugf("Backup error. Will retry. err=%s", err.Error())
+		logrus.Debugf("Backup error. err=%s", err.Error())
 		RunningBackupAPIID = ""
 		return
 	} else {
