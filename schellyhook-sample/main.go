@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"schellyhook"
 	"time"
 
+	"github.com/flaviostutz/schelly-webhook/schellyhook"
 	"github.com/Sirupsen/logrus"
 )
 
