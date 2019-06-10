@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 )
 
 //Options command line options
@@ -296,6 +296,6 @@ func runBackup(apiID string) {
 }
 
 func createAPIID() string {
-	uuid, _ := uuid.NewV4()
+	uuid := uuid.NewV4()
 	return uuid.String()
 }

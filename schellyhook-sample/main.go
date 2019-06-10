@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/flaviostutz/schelly-webhook/schellyhook"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 //SampleBackuper sample backuper
