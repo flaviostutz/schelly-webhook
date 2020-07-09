@@ -1,17 +1,13 @@
 FROM golang:1.12.3 AS BUILD
 
-RUN mkdir /schellyhook
-WORKDIR /schellyhook
-
-ADD go.mod .
-ADD go.sum .
+ADD / /
+WORKDIR /sample
 RUN go mod download
 
 #now build source code
-ADD schellyhook/ ./schellyhook
-ADD schellyhook-sample/ ./schellyhook-sample
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /go/bin/schellyhook ./schellyhook
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /go/bin/schellyhook-sample ./schellyhook-sample
+RUN go build -o /bin/schellyhook-sample
+# RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /go/bin/schellyhook ./schellyhook
+# RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /go/bin/schellyhook-sample ./schellyhook-sample
 
 FROM golang:1.12.3
 
@@ -27,9 +23,9 @@ ENV PRE_BACKUP_COMMAND ''
 ENV POST_BACKUP_COMMAND ''
 ENV PRE_POST_TIMEOUT_SECONDS '3600'
 
-COPY --from=BUILD /go/bin/* /bin/
-ADD startup.sh /
-ADD pre-backup.sh /
-ADD post-backup.sh /
+COPY --from=BUILD /bin/schellyhook-sample /bin/
+ADD /sample/startup.sh /
+ADD /sample/pre-backup.sh /
+ADD /sample/post-backup.sh /
 
 CMD [ "/startup.sh" ]

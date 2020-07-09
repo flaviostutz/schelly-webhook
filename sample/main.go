@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flaviostutz/schelly-webhook/schellyhook"
+	schellyhook "github.com/flaviostutz/schelly-webhook"
 	"github.com/sirupsen/logrus"
 )
 
